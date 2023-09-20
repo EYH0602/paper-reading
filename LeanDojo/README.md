@@ -20,5 +20,6 @@ based on the LeanDojo framework and code retrieval techniques from the dataset.
 
 1. No comparison with other LLM-based theorem provers, only comparied with GPT4.
 2. Code analysis part of the framework does not support function/theorem's full name.
+3. Did not solve the issue of unique fully qualified names of functions/lemmas (similar to name mangling in C++).
 
 ## Q&A
