@@ -31,7 +31,7 @@ date:
 | Theorem     | Function Definition        |
 | Proof       | Implementation of Function |
 
-$\implies$ LLM theorem proving $\approx$ code generation in a .
+$\implies$ LLM theorem proving $\approx$ code generation in a Dependent Type Language.
 
 # Approach
 
