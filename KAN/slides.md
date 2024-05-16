@@ -129,7 +129,7 @@ where $\lambda_i$s are *constants*.
 
 ## B-spline
 
-The set of all cubic splines on a give dataset form a vector space $V$.
+The set of all cubic splines on $[0, 1]$ form a vector space $V$.
 Let
 $$
 B = \{ B_1, \ldots, B_n\}
@@ -148,6 +148,23 @@ now we can use back propagation to learn activation functions! :)
 
 ![Left: Notations of activations that flow through the network. Right: an activation function is
 parameterized as a B-spline, which allows switching between coarse-grained and fine-grained grids.](./imgs/spline_notation.png)
+
+## Kolmogorov-Arnold Representation Network
+
+Now it is clear what is a layer in KAN is
+$\Phi = \{ \phi_{q, p} \}$
+where $p = 1, 2, \cdots, n_{in}$ and
+$q = 1, 2, \cdots, n_{out}$,
+is just a set of *learned* non-linear activations.
+
+Then KAT is just a 2 layer KAN with
+first layer $n_{in} = n$ and $n_{out} = 2n + 1$,
+and the second layer with $n_{in} = 2n + 1$ and $n_{out} = 1$.
+
+Then we can start stacking layers. :smiley:
+$$
+KAN(X) = (\Phi_{L-1} \circ \Phi_{L-2} \circ \cdots \circ \Phi_{1} \circ \Phi_{0}) X.
+$$
 
 ## Compared to MLP
 
