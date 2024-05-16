@@ -70,7 +70,7 @@ with smaller degree for each section.
 
 ![Spline in Sub-intervals](./imgs/cubic.png){height=55%}
 
-## Remaining Problems
+## Remaining Problem
 
 In real applications, data is **multivariate**.
 For example, in the formula of linear regression
