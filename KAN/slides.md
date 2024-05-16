@@ -4,7 +4,9 @@ title:
 author:
   - Yifeng He
 theme:
-  - Copenhagen
+  # - Copenhagen
+  - Boadilla 
+  # - Berkeley
 date:
   - May 15, 2024
 ---
@@ -65,7 +67,7 @@ polynomials can oscillate erratically.
 ## Cubic Spline Interpolation
 
 One way to overcome the oscillate problem is to limit the degree $n$.
-That is, divide $f$ into different sections and interpolate a polynomial
+That is, divide $f$ into different grids and interpolate a polynomial
 with smaller degree for each section.
 
 ![Spline in Sub-intervals](./imgs/cubic.png){height=55%}
@@ -160,6 +162,7 @@ is just a set of *learned* non-linear activations.
 Then KAT is just a 2 layer KAN with
 first layer $n_{in} = n$ and $n_{out} = 2n + 1$,
 and the second layer with $n_{in} = 2n + 1$ and $n_{out} = 1$.
+In this case, we say this KAN has shape $[n, 2n + 1, 1]$.
 
 Then we can start stacking layers. :smiley:
 $$
@@ -169,3 +172,94 @@ $$
 ## Compared to MLP
 
 ![Multi-Layer Perceptron vs. Kolmogorov-Arnold Network](./imgs/kan_mlp.pdf)
+
+# Experiments
+
+## Making KAN more accurate by Grid Extension
+
+From "neural scaling laws", we can improve MLP-based networks by making them larger,
+but we have to *retrain* the network.
+A spline can be made arbitrarily accurate to a target function as the grid can be made
+arbitrarily *fine-grained*.
+
+* Does KAN inherited this notation of "fine-graining"?
+* If so, can this be done during training?
+
+
+---
+
+Say we have a activation function $f$, coarse-grained grid $G_1$ and fine-grained $G_2$.
+Then we have
+
+$$
+\begin{aligned}
+f_{coarse}(x) = \sum_{i = 0}^{G_1 + k - 1} c_i B_i(x) \\
+f_{fine}(x) = \sum_{j=0}^{G_2 + k - 1} c_j^{'} B_j^{'}(x)
+\end{aligned}
+$$
+
+Then we can calculate the weights $c_j^{'}$ *directly* from $c_i$
+by minimizing the distance between $f_{fine}(x)$ and $f_{coarse}(x)$.
+
+$$
+\{c_j'\} = \underset{\{c_j'\}}{\rm argmin}\ \mathop{\mathbb{E}}_{x\sim p(x)}\left(\sum_{j=0}^{G_2+k-1}c_j'B_j'(x)-\sum_{i=0}^{G_1+k-1} c_i B_i(x)\right)^2.
+$$
+
+---
+
+![We can make KANs more accurate by grid extension during training.](./imgs/model_scaling_toy.pdf)
+
+*Small KANs generalize better.*
+
+## Overfitting? Can we regularize KANs?
+
+Recall in linear regression, 
+we can use LASSO ($l_1$ norm) to set some coefficients to zero for **sparsity**.
+
+Problem: $l_1$ norm is not defined for activation functions $\phi$, 
+so let's define the norm fo a as its average magnitude over its $N_p$ inputs, i.e.,
+$$
+\left|\phi\right|_1 \equiv \frac{1}{N_p}\sum_{s=1}^{N_p} \left|\phi(x^{(s)})\right|.
+$$
+Then for a KAN layer $\Phi$ with $n_{in}$ inputs and $n_{out}$ outputs, it is just the sum
+$$    
+\left|\Phi\right|_1 \equiv \sum_{i=1}^{n_{in}}\sum_{j=1}^{n_{out}} \left|\phi_{i,j}\right|_1.
+$$
+
+---
+
+In addition, we define the entropy of $\Phi$ to be
+$$
+S(\Phi) \equiv -\sum_{i=1}^{n_{\rm in}}\sum_{j=1}^{n_{\rm out}} \frac{\left|\phi_{i,j}\right|_1}{\left|\Phi\right|_1}{\rm log}\left(\frac{\left|\phi_{i,j}\right|_1}{\left|\Phi\right|_1}\right).
+$$
+The total training objective $\ell_{\rm total}$ is the prediction loss $\ell_{\rm pred}$ plus L1 and entropy regularization of all KAN layers:
+$$
+    \ell_{\rm total} = \ell_{\rm pred} + \lambda \left(\mu_1 \sum_{l=0}^{L-1}\left|\Phi_l\right|_1 + \mu_2 \sum_{l=0}^{L-1}S(\Phi_l)\right),
+$$
+where $\mu_1,\mu_2$ are relative magnitudes usually set to $\mu_1=\mu_2=1$, and $\lambda$ controls overall regularization magnitude.
+
+---
+
+![Regularization to important nodes improves interpretability.](./imgs/sr.png)
+
+**Pruning**:
+Automatic pruning is seen to discard all hidden neurons except the last one,
+leaving a [2, 1, 1] KAN. 
+The activation functions appear to be known symbolic functions.
+
+## Continual Learning and Catastrophic Forgetting
+
+![Learning the splines has local plasticity!](./imgs/continual_learning.pdf)
+
+Spline bases are local, so a sample will only affect a
+few nearby spline coefficients.
+By contrast, since MLPs use global activations,
+any local change may propagate uncontrollably to regions far away, 
+destroying the information being stored there.
+
+## Does KAN scale?
+
+![Compare KANs to MLPs on five toy examples. KANs can almost saturate the fastest scaling law
+predicted by our theory ($\alpha=4$), while MLPs scales slowly and plateau quickly.](./imgs/model_scaling.pdf)
+
+# Discussion
